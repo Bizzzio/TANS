@@ -15,8 +15,14 @@ public:
     ~Reconstruction(){delete fResiduals;}
  
     void VertexReco();
-    void FindTracklets();
     void MinDca();
+    void TrackletsReco();
+    std::vector<double> GetTrackletParameters(int j);
+    // void VertexReco(int index, double t);
+    void MinGlobalDistance();
+    MaterialBudget::fPoint FirstOctant(MaterialBudget::fPoint point);
+    vector<double> Line(int index, double time);
+    vector<double> TimesMinGlobalDistance(int index0);
  
 private:
     std::vector<std::vector<MaterialBudget::fPoint>> fIntersections1;
