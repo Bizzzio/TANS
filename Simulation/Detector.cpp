@@ -2,10 +2,12 @@
 
 Detector::Detector() : MaterialBudget() {};
 
-Detector::Detector(double thickness, double radius, double length, string material, bool multscat=1, bool smearing=1, bool noise=0)
-: MaterialBudget(thickness, radius, length, material, multscat)
+Detector::Detector(double thickness, double radius, double length, string material, bool multscat=1, bool smearing=1, bool noise=0, int meannoise=0)
+: MaterialBudget(thickness, radius, length, material, multscat), fMeanNoise(meannoise)
 {
     SetStatus(smearing, noise);
+    if(fNoise)
+        Noise();
 }
 
 Detector& Detector::SetStatus(vector<bool> status)
@@ -33,9 +35,8 @@ void Detector::Interaction(Particle* particle)
  * 
  */
     FillData(particle); 
-    if(fMultScat){
+    if(fMultScat)
         MultScattering(particle);
-    }
 }
 
 void Detector::FillData(Particle* particle)
@@ -109,5 +110,26 @@ void Detector::SetBranchAddress(TTree& gentree,TTree& rectree, unsigned countdet
  * 
  */
     gentree.SetBranchAddress((string("GenHits_")+std::to_string(countdet)).c_str(), &fTrueHitPtr);
-    rectree.SetBranchAddress((string("RecHits_")+std::to_string(countdet)).c_str(), &fRecoHitPtr);
+    if (fSmearing)
+        rectree.SetBranchAddress((string("RecHits_")+std::to_string(countdet)).c_str(), &fRecoHitPtr);
+    else    
+        rectree.SetBranchAddress((string("RecHits_")+std::to_string(countdet)).c_str(), &fTrueHitPtr);
+
+}
+
+void Detector::Noise()
+{
+    MaterialBudget::fPoint noise;
+    noise.isIntersection = true;
+    static double  pi=TMath::Pi(), Twopi=2*pi;
+    int noisehits=gRandom->Poisson(fMeanNoise);
+    for (int i=0; i<noisehits;++i)
+    {
+        noise.z=(gRandom->Rndm()-0.5)*fLength;
+        double phi=gRandom->Rndm()*Twopi;
+        noise.phi=phi-pi/2;
+        noise.x=fRadius*TMath::Cos(phi);
+        noise.y=fRadius*TMath::Sin(phi);
+        fRecoHit.push_back(noise);
+    }
 }

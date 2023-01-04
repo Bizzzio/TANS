@@ -35,6 +35,8 @@ public:
     };
 
     Event(vector<MaterialBudget*> detectors, unsigned multiplicity, double x, double y, double z, TTree& gentree, TTree& rectree);
+    Event(vector<MaterialBudget*> detectors, unsigned multiplicity, double x, double y, double z,vector<double> direction, TTree& gentree, TTree& rectree);
+    Event(vector<MaterialBudget*> detectors, unsigned multiplicity, double x, double y, double z,TH1D* pseudorap, TTree& gentree, TTree& rectree);
     ~Event();
     void ProcessEvent(TTree&, TTree&);
     void EventVisual(vector<Particle*> particles);

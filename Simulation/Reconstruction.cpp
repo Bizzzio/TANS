@@ -2,6 +2,7 @@
 #include"TDirectory.h"
 #include "TH1D.h"
 #include "TCanvas.h"
+#include <cmath>
  
 ClassImp(Reconstruction)
  
@@ -86,6 +87,8 @@ void Reconstruction::FindTracklets()
                 }
         if (tracklet.size()>0)
             fTracklets.push_back(tracklet);
+        else
+            fTracklets.push_back({});
         tracklet.clear();
     }
 }
@@ -131,6 +134,11 @@ void Reconstruction::MinDca()
     vector<double> vertexTemp;
     for(auto& i: fTracklets)
     {
+        if (i.size()==0)
+        {
+            fVertexesZ.push_back(nan(""));
+            continue;
+        }
         FillHistoMinDca(histo, i, vertexTemp);
 
         int histomax(histo->GetMaximumBin()), count(0);
@@ -169,6 +177,10 @@ void Reconstruction::FillHistoMinDca(TH1D* histo, vector<MaterialBudget::fPoint>
 
 void Reconstruction::FillHistoResiduals()
 {
-    for(unsigned i=0; i<fVertexesZ.size(); ++i)
-        fResiduals->Fill(fVertexesZ[i]-fConfigs[i][0].z);
+    for(unsigned i=0; i<fConfigs.size(); ++i)
+    {
+        //cout<<fVertexesZ[i]<<"\t"<<fConfigs[i][0].z<<endl;
+        if (!isnan(fVertexesZ[i]))
+            fResiduals->Fill(fVertexesZ[i]-fConfigs[i][0].z);
+    }
 }

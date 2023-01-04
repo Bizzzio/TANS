@@ -30,6 +30,52 @@ fDetectors(detectors)
     //EventVisual(fParticles);
 }
 
+Event::Event(vector<MaterialBudget*> detectors, unsigned multiplicity, double x, double y, double z,vector<double> direction, TTree& gentree, TTree& rectree):
+fDetectors(detectors)
+{
+
+    while (fParticles.size()<multiplicity)          //Creates particles
+    {
+        Particle* temp = new Particle({x,y,z},direction);
+        fParticles.push_back(temp);
+    }
+
+    //Stores event infos
+    fVertMult temp;
+    temp.multiplicity = multiplicity;
+    temp.x = x;
+    temp.y = y;
+    temp.z = z;
+    fConfig.push_back(temp);
+    
+
+    ProcessEvent(gentree, rectree);
+    //EventVisual(fParticles);
+}
+
+Event::Event(vector<MaterialBudget*> detectors, unsigned multiplicity, double x, double y, double z,TH1D* pseudorap, TTree& gentree, TTree& rectree):
+fDetectors(detectors)
+{
+
+    while (fParticles.size()<multiplicity)          //Creates particles
+    {
+        Particle* temp = new Particle({x,y,z},pseudorap);
+        fParticles.push_back(temp);
+    }
+
+    //Stores event infos
+    fVertMult temp;
+    temp.multiplicity = multiplicity;
+    temp.x = x;
+    temp.y = y;
+    temp.z = z;
+    fConfig.push_back(temp);
+    
+
+    ProcessEvent(gentree, rectree);
+    //EventVisual(fParticles);
+}
+
 Event::~Event()
 {
     //deallocates memory

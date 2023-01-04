@@ -22,7 +22,14 @@ Particle::Particle (vector<double> point, vector<double> direction)
 
 Particle::Particle (vector<double> point, TRandom* rndmptr)
 {
-    SetPolarDirection(TMath::ACos(1-2.*rndmptr->Rndm()),2*TMath::Pi()*rndmptr->Rndm()).SetPoint(point[0],point[1],point[2]);
+    double direction[3];
+    rndmptr->Sphere(direction[0],direction[1],direction[2],1);
+    SetDirection(direction[0],direction[1],direction[2]).SetPoint(point[0],point[1],point[2]);
+}
+
+Particle::Particle (vector<double> point, TH1D* theta)
+{
+    SetPolarDirection(theta->GetRandom(),2*TMath::Pi()*gRandom->Rndm()).SetPoint(point[0],point[1],point[2]);
 }
 
 Particle& Particle::SetDirection(double px, double py, double pz)

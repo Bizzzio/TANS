@@ -21,7 +21,10 @@ public:
     Run(TString cfgFileName);
 
 private:
-    void RunConstMult(), RunUniformMult(), RunCustomMult(), CreateDetectors();
+    void RunConstDistr(), RunUniformDistr(), RunCustomDistr(), CreateDetectors();
+    unsigned GetConstMult()             {return fConstMult;}
+    unsigned GetUniformMult()           {return gRandom->Integer(fMultRange[1]-fMultRange[0]+1) + fMultRange[0];}
+    inline unsigned GetCustomMult();
     YAML::Node fConfigFile;
     string fOutFileName;
     TTree fTreeGen;
@@ -29,8 +32,14 @@ private:
 
     //Multiplicity info
     unsigned fNEvents,fConstMult;
-    string fMultType,fMultFile,fMultHisto;
+    string fMultType,fMultFile,fMultHistoName;
     vector<unsigned> fMultRange;
+    TH1D* fMultHisto;
+    unsigned (Run::*fMultFunction)() = &Run::GetConstMult;
+
+    //Angular distribution settings
+    string fDistrType,fDistrFile,fDistrHisto;
+    vector<double> fDistrConst;
 
     //Vertex dispersion info
     double fSigmaZ,fSigmaX,fSigmaY;
@@ -42,7 +51,8 @@ private:
     vector<string> fMaterial;
 
     //Reconstruction & simulation options
-    bool fDoMultScattering, fDoSmearing;
+    bool fDoMultScattering, fDoSmearing, fDoNoise;
+    int fMeanNoise;
 
     bool fVerbose;
 

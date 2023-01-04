@@ -1,12 +1,20 @@
 OutFileName: Simulation/Tree.root
-NEvents: 10000
+NEvents: 1000000
 
 #Multiplicity settings
-MultType: kCustom               #Possibilities: kConst, kCustom, kUniform
-MultConst: 100                  #only if kConst
-MultFile: Simulation/Multi_ALICE.root
-MultHisto: Table 3/Hist1D_y1
-MultRange: [5,100]              #used for kUniform and kCustom
+Multiplicity:
+  MultType: kCustom              #Possibilities: kConst, kCustom, kUniform
+  MultConst: 10                  #only if kConst
+  MultFile: Simulation/Multi_ALICE.root
+  MultHistoName: Table 3/Hist1D_y1
+  MultRange: null              #used for kUniform and kCustom
+
+#Angular distribution settings
+AngularDistr:
+  DistrType: kCustom              #Possibilities: kConst, kCustom, kUniform
+  DistrConst: [0,1,0]             #only if kConst
+  DistrFile: Simulation/kinem.root
+  DistrHisto: heta2
 
 #Vertex dispersion settings
 SigmaZ: 5.3    #cm
@@ -20,6 +28,9 @@ Thickness: [0.08,0.02,0.02]       #cm
 Lenght: [27.,27.,27.]             #cm
 Material: [Be, Si, Si]            #Be or Si
 DoMultScattering: True
+#Detectors only
 DoSmearing: True
+DoNoise: True
+MeanNoise: 10                     #Mean number of noise "hits" per detector
 
 Verbose: True

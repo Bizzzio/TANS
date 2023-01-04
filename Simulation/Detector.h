@@ -45,7 +45,7 @@ class Detector : public MaterialBudget
 public:
 
     Detector();
-    Detector(double thickness, double radius, double length, string material, bool multscat, bool smearing, bool noise);
+    Detector(double thickness, double radius, double length, string material, bool multscat, bool smearing, bool noise, int meannoise);
 
     virtual bool IsDetector() const                             {return true;}
     virtual void Interaction(Particle* particle);
@@ -53,7 +53,7 @@ public:
     Detector& SetStatus(bool smearing, bool noise)              {fSmearing = smearing; fNoise = noise; return *this;}
     Detector& SetStatus(vector<bool> status);
 
-    virtual void ClearData()                                    {fTrueHit.clear(); fRecoHit.clear();}
+    virtual void ClearData()                                    {fTrueHit.clear(); fRecoHit.clear(); if(fNoise) Noise();}
     virtual void FillData(Particle*);
     virtual void SetBranchAddress(TTree& gentree,TTree& rectree, unsigned countdet);
     MaterialBudget::fPoint GetSmearedIntersection(const MaterialBudget::fPoint& intersection);
@@ -63,7 +63,10 @@ public:
     vector<MaterialBudget::fPoint> GetRecoHits() const          {return fRecoHit;}
     
 private:
+    void Noise();
+    
     bool fSmearing, fNoise;
+    int fMeanNoise;
     vector<MaterialBudget::fPoint> fTrueHit, fRecoHit;
     vector<MaterialBudget::fPoint>* fTrueHitPtr = &fTrueHit;
     vector<MaterialBudget::fPoint>* fRecoHitPtr = &fRecoHit;
