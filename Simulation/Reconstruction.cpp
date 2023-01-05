@@ -76,6 +76,11 @@ Reconstruction::Reconstruction()
     trackletdca.Close();*/
 }
 
+/*bool Reconstruction::CheckTracklet(MaterialBudget::fPoint int1, Materialbudget::fPoint int2)
+{
+
+}*/
+
 void Reconstruction::TrackletsReco()
 {
     //cout << "Entering FindTracklets" << endl;
@@ -88,9 +93,11 @@ void Reconstruction::TrackletsReco()
             for (auto j: fIntersections2[i]){
                 if(abs(y.phi-j.phi)<phimax)
                 {
-                    tracklet.push_back(y);
-                    tracklet.push_back(j);
-                    count++;
+                    //if(CheckTracklet(y,j)){
+                        tracklet.push_back(y);
+                        tracklet.push_back(j);
+                        count++;
+                    //}
                 }
             }
         }
@@ -99,6 +106,32 @@ void Reconstruction::TrackletsReco()
             fTracklets.push_back(tracklet);
         tracklet.clear();
     }
+    //std::vector<std::vector<int>> CombinatorialTracklets;
+    //for(unsigned event=0; event<fTracklets.size(); event++){
+    //    std::vector<int> combtrackindexes; 
+    //    for(unsigned j=0; j<fTracklets[event].size(); j+=2){
+    //        for(unsigned k=0; k<fTracklets[event].size(); k+=2){
+    //            if(k==j) continue;
+    //            if(fTracklets[event][j].x==fTracklets[event][k].x && fTracklets[event][j].y==fTracklets[event][k].y 
+    //                && fTracklets[event][j].z==fTracklets[event][k].z)
+    //                {
+    //                    combtrackindexes.push_back(1); // tracklets sharing intersection with first detector
+    //                    combtrackindexes.push_back(j);
+    //                    combtrackindexes.push_back(k);
+    //                }
+    //            if(fTracklets[event][j+1].x==fTracklets[event][k+1].x && fTracklets[event][j+1].y==fTracklets[event][k+1].y 
+    //                && fTracklets[event][j+1].z==fTracklets[event][k+1].z)
+    //                {   
+    //                    combtrackindexes.push_back(2); // tracklets sharing intersection with second detector
+    //                    combtrackindexes.push_back(j+1);
+    //                    combtrackindexes.push_back(k+1);
+    //                }
+    //        }
+    //    }
+    //    CombinatorialTracklets.push_back(combtrackindexes);
+    //    combtrackindexes.clear();
+    //}
+    //cout << "Combinatorial tracklets: " << CombinatorialTracklets.size()/3 << endl;
     //for(unsigned i=0; i<fTracklets.size(); i++){
     //    cout << "Event " << i << " tracklets: " << endl;
     //    for(unsigned j=0; j<fTracklets[i].size(); j+=2){
@@ -145,6 +178,7 @@ void Reconstruction::FillHistoMinDca(TH1D* histo, vector<MaterialBudget::fPoint>
 
         double t;
         t = - (a*tracklets[j].x + b*tracklets[j].y) / (a*a+b*b);    // t of closest approach
+        cout << "Time of closest approach: " << t << endl;
 
         vertextemp.push_back(tracklets[j].z + c*t);
         histo->Fill(vertextemp.back());
@@ -199,19 +233,28 @@ void Reconstruction::MinGlobalDistance()
     for(int nevent=0; nevent<fTracklets.size(); nevent++){
         cout << "Entering MinGlobalDistance" << endl;
             
-            // First step: find tracklet with smallest phi
+            // First step: find tracklet with smallest theta
         int index=0;
-        int phi=abs(fTracklets[nevent][0].phi);
+        double theta=GetTrackletParameters(nevent,0)[3];
         for(unsigned i=2; i<fTracklets[nevent].size(); i+=2){
-            if(abs(fTracklets[nevent][i].phi)<phi){
-                phi=fTracklets[nevent][i].phi;
-                index=i;
+            double theta1 = GetTrackletParameters(nevent,i)[3];
+            if(theta1<=TMath::Pi()/2){
+                if(theta1<theta){
+                    theta=theta1;
+                    index=i;
+                }
+            }
+            if(theta1>TMath::Pi()/2){
+                if((TMath::Pi()-theta1)<theta){
+                    theta=theta1;
+                    index=i;
+                }
             }
         }
             // Second step: calculate norm of difference vector between equivalent points belonging to the octant x,y,z>0 of intersections
-            // with 2nd detector of all tracklets and tracklet with minimum phi
+            // with 2nd detector of all tracklets and tracklet with minimum theta
         std::vector<double> distances;
-        MaterialBudget::fPoint point0 = FirstOctant(fTracklets[nevent][index+1]); // intersection of tracklet with minimum phi in first octant
+        MaterialBudget::fPoint point0 = FirstOctant(fTracklets[nevent][index+1]); // intersection of tracklet with minimum theta in first octant
         for(unsigned i=0; i<fTracklets[nevent].size(); i+=2){
             MaterialBudget::fPoint point1 = FirstOctant(fTracklets[nevent][i+1]);
             double DX = point1.x-point0.x; 
@@ -228,15 +271,16 @@ void Reconstruction::MinGlobalDistance()
 
         // Fourth step: declare histogram with time on x axis, total distance of all tracklet points on y axis
         int nbins = 1000;
-        TH1D* hist = new TH1D("TrackDcaVertex", "TrackDcaVertex", nbins, 0, 10);
+        TH1D* hist = new TH1D("TrackDcaVertex", "TrackDcaVertex", nbins, -2, 2);
         
         // Fifth step: fill histogram
         for(unsigned int i=1; i<=nbins; i++){
-            hist->Fill(i,FillHistoTrackMinDca(nevent, hist->GetBinCenter(i), delays));
+            hist->Fill(hist->GetBinCenter(i),FillHistoTrackMinDca(nevent, hist->GetBinCenter(i), delays));
         }
 
         int binmin = hist->GetMinimumBin();
         double t0 = hist->GetXaxis()->GetBinCenter(binmin);
+        cout << "Time minimizing total distance and corresponding bin: " << t0 << " " << binmin << endl;
 
         for(unsigned i=0; i<fTracklets[nevent].size(); i+=2){
             std::vector<double> trackletvertex = Line(nevent, i, t0+delays[i]);
@@ -248,6 +292,10 @@ void Reconstruction::MinGlobalDistance()
         for(unsigned b=0; b<fVertexesZTrackDca.size(); b++){
             cout << fVertexesZTrackDca[b] << "    ";
         }
+
+        TFile TrackDca("TrackDca.root","recreate");
+        hist->Write();
+        TrackDca.Close();
 
         delete hist;
     }
@@ -298,13 +346,13 @@ MaterialBudget::fPoint Reconstruction::FirstOctant(MaterialBudget::fPoint point)
     double y = point.y; 
     double z = point.z;
 
-    if(point.x>0 && point.y>0 && point.z<0) point.z = -z;
-    if(point.x>0 && point.y<0 && point.z>0) point.y = -y;
-    if(point.x<0 && point.y>0 && point.z>0) point.x = -x;
-    if(point.x<0 && point.y<0 && point.z>0) point.x = -x; point.y = -y;
-    if(point.x<0 && point.y>0 && point.z<0) point.x = -x; point.z = -z; 
-    if(point.x>0 && point.y<0 && point.z<0) point.y = -y; point.z = -z; 
-    if(point.x<0 && point.y<0 && point.z<0) point.x = -x; point.y = -y; point.z = -z;
+    if(x>0 && y>0 && z<0) point.z = -z;
+    if(x>0 && y<0 && z>0) point.y = -y;
+    if(x<0 && y>0 && z>0) point.x = -x;
+    if(x<0 && y<0 && z>0) point.x = -x; point.y = -y;
+    if(x<0 && y>0 && z<0) point.x = -x; point.z = -z; 
+    if(x>0 && y<0 && z<0) point.y = -y; point.z = -z; 
+    if(x<0 && y<0 && z<0) point.x = -x; point.y = -y; point.z = -z;
 
     return point;
 }
