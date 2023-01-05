@@ -1,8 +1,8 @@
 OutFileName: Simulation/Tree.root
-NEvents: 10000
+NEvents: 1
 
 #Multiplicity settings
-MultType: kCustom               #Possibilities: kConst, kCustom, kUniform
+MultType: kConst               #Possibilities: kConst, kCustom, kUniform
 MultConst: 100                  #only if kConst
 MultFile: Simulation/Multi_ALICE.root
 MultHisto: Table 3/Hist1D_y1
