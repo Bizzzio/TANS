@@ -76,10 +76,15 @@ Reconstruction::Reconstruction()
     trackletdca.Close();*/
 }
 
-/*bool Reconstruction::CheckTracklet(MaterialBudget::fPoint int1, Materialbudget::fPoint int2)
+bool Reconstruction::CheckTracklet(int& count, MaterialBudget::fPoint int1, MaterialBudget::fPoint int2)
 {
-
-}*/
+    if((int1.z>0 && int2.z>0) || (int1.z<0 && int2.z<0))
+        return true;
+    else{
+        count++;
+        return false;
+    }
+}
 
 void Reconstruction::TrackletsReco()
 {
@@ -89,19 +94,21 @@ void Reconstruction::TrackletsReco()
     for (unsigned i=0; i<fIntersections1.size(); ++i)
     {
         int count=0;
+        int countdiscarded=0;
         for (auto y: fIntersections1[i]){
             for (auto j: fIntersections2[i]){
                 if(abs(y.phi-j.phi)<phimax)
                 {
-                    //if(CheckTracklet(y,j)){
+                    if(CheckTracklet(countdiscarded,y,j)){
                         tracklet.push_back(y);
                         tracklet.push_back(j);
                         count++;
-                    //}
+                    }
                 }
             }
         }
         cout << "Reconstructed tracklets: " << count << endl;
+        cout << "Discarded tracklets: " << countdiscarded << endl;
         if (tracklet.size()>0)
             fTracklets.push_back(tracklet);
         tracklet.clear();
@@ -260,7 +267,7 @@ void Reconstruction::FindShortestTracklet(int nevent, int& index, double& thetam
 void Reconstruction::MinGlobalDistance()
 {
     for(int nevent=0; nevent<fTracklets.size(); nevent++){
-        cout << "Entering MinGlobalDistance" << endl;
+        //cout << "Entering MinGlobalDistance" << endl;
             
             // First step: find tracklet with smallest theta
         int index=0;
@@ -285,7 +292,7 @@ void Reconstruction::MinGlobalDistance()
         }
 
         // Fourth step: declare histogram with time on x axis, total distance of all tracklet points on y axis
-        int nbins = 1000;
+        int nbins = 100;
         TH1D* hist = new TH1D("TrackDcaVertex", "TrackDcaVertex", nbins, -2, 2);
         
         // Fifth step: fill histogram
@@ -319,7 +326,7 @@ void Reconstruction::MinGlobalDistance()
 double Reconstruction::FillHistoTrackMinDca(int nevent, double time, vector<double> delays)
 {
     // fills histogram with total distance between tracklets at time t
-    cout << "Entering FillHistoTrackMinDca" << endl;
+    //cout << "Entering FillHistoTrackMinDca" << endl;
     
         // Sixth step: loop over all tracklets to find total distance of all tracklets with respect to all tracklets
     double totaldistance=0; // total distance
@@ -355,7 +362,7 @@ double Reconstruction::GetTotalDistance(int nevent, unsigned trackindex, double 
 MaterialBudget::fPoint Reconstruction::FirstOctant(MaterialBudget::fPoint point)
 {
         // turns generic point into a point in x,y,z>0 octant on the cone defined by the same theta
-    cout << "Entering FirstOctant" << endl;
+    //cout << "Entering FirstOctant" << endl;
     
     double x = point.x; 
     double y = point.y; 
