@@ -228,6 +228,35 @@ vector<double> Reconstruction::Line(int nevent, int index, double time)
     return linecoordinates;
 }
 
+void Reconstruction::FindShortestTracklet(int nevent, int& index, double& thetamin)
+{
+    if(fTracklets[nevent][0].z>0){
+        thetamin = TMath::Pi()-GetTrackletParameters(nevent,0)[3];
+    }
+    if(fTracklets[nevent][0].z<=0){
+        thetamin = GetTrackletParameters(nevent,0)[3];
+    }
+    for(unsigned i=2; i<fTracklets[nevent].size(); i+=2){
+        double theta1 = GetTrackletParameters(nevent,i)[3];
+        if(fTracklets[nevent][i].z<0){
+            if(theta1<TMath::Pi()/2){
+                if(theta1<thetamin){
+                    thetamin=theta1;
+                    index=i;
+                }
+            }
+        }
+        else{
+            if(theta1>=TMath::Pi()/2){
+                if(TMath::Pi()-theta1<thetamin){
+                    thetamin=theta1;
+                    index=i;
+                }
+            }
+        }
+    }
+}
+
 void Reconstruction::MinGlobalDistance()
 {
     for(int nevent=0; nevent<fTracklets.size(); nevent++){
@@ -235,26 +264,12 @@ void Reconstruction::MinGlobalDistance()
             
             // First step: find tracklet with smallest theta
         int index=0;
-        double theta=GetTrackletParameters(nevent,0)[3];
-        for(unsigned i=2; i<fTracklets[nevent].size(); i+=2){
-            double theta1 = GetTrackletParameters(nevent,i)[3];
-            if(theta1<=TMath::Pi()/2){
-                if(theta1<theta){
-                    theta=theta1;
-                    index=i;
-                }
-            }
-            if(theta1>TMath::Pi()/2){
-                if((TMath::Pi()-theta1)<theta){
-                    theta=theta1;
-                    index=i;
-                }
-            }
-        }
+        double theta;
+        FindShortestTracklet(nevent, index, theta);
             // Second step: calculate norm of difference vector between equivalent points belonging to the octant x,y,z>0 of intersections
             // with 2nd detector of all tracklets and tracklet with minimum theta
         std::vector<double> distances;
-        MaterialBudget::fPoint point0 = FirstOctant(fTracklets[nevent][index+1]); // intersection of tracklet with minimum theta in first octant
+        MaterialBudget::fPoint point0 = FirstOctant(fTracklets[nevent][index+1]); // intersection in first octant with 2nd detector for tracklet with minimum theta 
         for(unsigned i=0; i<fTracklets[nevent].size(); i+=2){
             MaterialBudget::fPoint point1 = FirstOctant(fTracklets[nevent][i+1]);
             double DX = point1.x-point0.x; 

@@ -24,6 +24,7 @@ public:
     vector<double> Line(int nevent, int index, double time);
     double FillHistoTrackMinDca(int nevent, double time, vector<double> delays);
     double GetTotalDistance(int nevent, unsigned trackindex, double time);
+    void FindShortestTracklet(int nevent, int& index, double& thetamin);
     // vector<double> TimesMinGlobalDistance(int index0);
  
 private:
