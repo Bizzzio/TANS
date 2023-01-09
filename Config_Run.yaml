@@ -3,7 +3,7 @@ NEvents: 1
 
 #Multiplicity settings
 MultType: kConst               #Possibilities: kConst, kCustom, kUniform
-MultConst: 100                  #only if kConst
+MultConst: 5                  #only if kConst
 MultFile: Simulation/Multi_ALICE.root
 MultHisto: Table 3/Hist1D_y1
 MultRange: [5,100]              #used for kUniform and kCustom
