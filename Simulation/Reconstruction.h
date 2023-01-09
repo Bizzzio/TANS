@@ -17,16 +17,13 @@ public:
     void VertexReco();
     void MinDca();
     void TrackletsReco();
-    std::vector<double> GetTrackletParameters(int nevent, int ntracklet);
-    // void VertexReco(int index, double t);
-    void MinGlobalDistance();
-    MaterialBudget::fPoint FirstOctant(MaterialBudget::fPoint point);
-    vector<double> Line(int nevent, int index, double time);
-    double FillHistoTrackMinDca(int nevent, double time, vector<double> delays);
-    double GetTotalDistance(int nevent, unsigned trackindex, double time);
-    void FindShortestTracklet(int nevent, int& index, double& thetamin);
-    bool CheckTracklet(int& count, MaterialBudget::fPoint int1, MaterialBudget::fPoint int2);
-    // vector<double> TimesMinGlobalDistance(int index0);
+    std::vector<double> GetTrackletParameters(MaterialBudget::fPoint point1, MaterialBudget::fPoint point2);
+    void VertexRecoGeom();
+    vector<double> Line(MaterialBudget::fPoint point1, MaterialBudget::fPoint point2, vector<double> velocity, double time);
+    void FillHistoVertexGeom(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, TH1D* graph);
+    double GetTotalDistance(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, double time);
+
+
  
 private:
     std::vector<std::vector<MaterialBudget::fPoint>> fIntersections1;
