@@ -21,7 +21,7 @@ public:
     void VertexRecoGeom();
     vector<double> Line(MaterialBudget::fPoint point1, MaterialBudget::fPoint point2, vector<double> velocity, double time);
     void FillHistoVertexGeom(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, TH1D* graph);
-    double GetTotalDistance(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, double time);
+    double GetTotalDistance(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, double time, double mindistance);
 
 
  
@@ -34,7 +34,7 @@ private:
     std::vector<double> fVertexesZ;
     std::vector<std::vector<double>> fVertexesTrackDca;
     std::vector<double> fVertexesZTrackDca;
-    TH1D* fResiduals = new TH1D("Residuals", "Residuals", 500,-0.5,0.5);
+    TH1D* fResiduals = new TH1D("Residuals", "Residuals", 500,-5,5);
 
     void FillHistoMinDca(TH1D* histo, vector<MaterialBudget::fPoint>& tracklets, vector<double>& vertextemp);
     void FillHistoResiduals();

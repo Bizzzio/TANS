@@ -36,41 +36,19 @@ Reconstruction::Reconstruction()
        fConfigs.push_back(*configs);
     }
 
-
-
-    //cout << "Intersezioni1: " << fIntersections1.size() << endl;    
-    //for (auto i: fIntersections1){
-    //    //cout << i.size() << endl;
-    //    for (auto j: i){
-    //        //j.print();
-    //    }
-    //    //cout << endl;
-    //}
-    //cout << endl;
-    //cout << "Intersezioni2: " << fIntersections2.size() << endl;
-    //for (auto x: fIntersections2){
-    //    cout << x.size() << endl;
-    //    for (auto y: x){
-    //        //y.print();
-    //    }
-    //    //cout << endl;
-    //}
-    //cout << endl;
-    //cout << "Fine stampa" << endl;
-    
-    
+   
     TrackletsReco();
     cout << "TrackletsReco ended" << endl;
     //MinDca();
     //cout << "MinDca ended" << endl;
-    //FillHistoResiduals();
     //cout << "FillHIstoResiduals ended" << endl;
     file->Close();
     VertexRecoGeom();
     cout << "MinGlobalDistance ended" << endl;
-    //TFile outfile("outfile.root","recreate");
-    //fResiduals->Write();
-    //outfile.Close();
+    FillHistoResiduals();
+    TFile outfile("outfile.root","recreate");
+    fResiduals->Write();
+    outfile.Close();
     /*TFile outfile("trackletdca.root","recreate");
     ftrackletdca->Write();
     trackletdca.Close();*/
@@ -97,8 +75,8 @@ void Reconstruction::TrackletsReco()
                 }
             }
         }
-        cout << "Reconstructed tracklets: " << count << endl;
-        cout << "Discarded tracklets: " << countdiscarded << endl;
+        //cout << "Reconstructed tracklets: " << count << endl;
+        //cout << "Discarded tracklets: " << countdiscarded << endl;
         if (tracklet.size()>0)
             fTracklets.push_back(tracklet);
         tracklet.clear();
@@ -141,7 +119,7 @@ void Reconstruction::FillHistoMinDca(TH1D* histo, vector<MaterialBudget::fPoint>
 
         double t;
         t = - (a*tracklets[j].x + b*tracklets[j].y) / (a*a+b*b);    // t of closest approach
-        cout << "Time of closest approach: " << t << endl;
+        //cout << "Time of closest approach: " << t << endl;
 
         vertextemp.push_back(tracklets[j].z + c*t);
         histo->Fill(vertextemp.back());
@@ -160,9 +138,9 @@ std::vector<double> Reconstruction::GetTrackletParameters(MaterialBudget::fPoint
     std::vector<double> trackletparameters;
     double aa,bb,cc,theta,phi,norm; 
     norm = TMath::Sqrt((point2.x-point1.x)*(point2.x-point1.x)+(point2.y-point1.y)*(point2.y-point1.y)+(point2.z-point1.z)*(point2.z-point1.z));
-    aa = (point2.x - point1.x)/norm;
-    bb = (point2.y - point1.y)/norm;
-    cc = (point2.z - point1.z)/norm;
+    aa = (point2.x - point1.x);
+    bb = (point2.y - point1.y);
+    cc = (point2.z - point1.z);
     theta=TMath::ACos(cc);
     phi=TMath::ATan(bb/aa);
     if (aa<0)
@@ -180,10 +158,13 @@ void Reconstruction::VertexRecoGeom()
 {   
     for(int i=0; i<fTracklets.size();i++)
     {
-  	    double tmin=-20., tmax=20.;
-        int nbins=100;
-        TH1D* histo = new TH1D("vertex", "vertex", nbins, -20, 20);
-  	    TH1D* hist = new TH1D("TrackDcaVertex", "TrackDcaVertex", nbins, tmin, tmax);
+        //if (i%1000 == 0)
+            cout<<"Event "<<i<<endl;
+  	    double tmin=-2., tmax=0.;
+        int nbins=1000;
+        TH1D* histo = new TH1D("vertex", "vertex", 50, -15, 15);             //to discard combinatorial bkg
+  	    TH1D* hist = new TH1D("TrackDcaVertex", "TrackDcaVertex", nbins, tmin, tmax);       //for time of closest approach
+        
         std::vector<double> vertexTemp;
         std::vector<MaterialBudget::fPoint> acceptedtracks;
 
@@ -198,32 +179,29 @@ void Reconstruction::VertexRecoGeom()
             }
     	std::vector<std::vector<double>> newvelocities;
   		for(int z=0; z<acceptedtracks.size(); z+=2){
-    	  std::vector<double> velocities;
-          std::vector<double> par = GetTrackletParameters(acceptedtracks[z],acceptedtracks[z+1]);
-    	  double sintheta = TMath::Sin(par[3]);
-    	  velocities.push_back(par[0]/sintheta);
-    	  velocities.push_back(par[1]/sintheta);
-    	  velocities.push_back(par[2]/sintheta);
-    	  newvelocities.push_back(velocities);
-    	  velocities.clear();
+    	  newvelocities.push_back(GetTrackletParameters(acceptedtracks[z],acceptedtracks[z+1]));
     	}
       	FillHistoVertexGeom(acceptedtracks, newvelocities, hist);    	
     
-        TFile file("VertexRecoGeom.root", "recreate");
-        hist->Write();
-        histo->Write();
-        file.Close();
-        int histomin(histo->GetMinimumBin());
+        //TFile file("VertexRecoGeom.root", "recreate");
+        //hist->Write();
+        //histo->Write();
+        //file.Close();
+        int histomin(hist->GetMinimumBin());
         double vertextime = hist->GetBinCenter(histomin);
+        //cout<<"VERTEXTIME:"<< vertextime<<endl;
         for(int y=0; y<acceptedtracks.size(); y+=2){
-            std::vector<double> vertexcoordinates = Line(acceptedtracks[y], acceptedtracks[y+1], newvelocities[y/2], vertextime);
+            std::vector<double> vertexcoordinates = Line(acceptedtracks[y], acceptedtracks[y+1], GetTrackletParameters(acceptedtracks[y],acceptedtracks[y+1]), vertextime);
             fVertexesTrackDca.push_back(vertexcoordinates);
             fVertexesZTrackDca.push_back(vertexcoordinates[2]);
         }
+        double Vertexmean=0;
         for (int i=0; i<fVertexesZTrackDca.size(); i++)
         {
-            cout << fVertexesZTrackDca[i] << endl;
+            Vertexmean+=fVertexesZTrackDca[i];
         }
+        Vertexmean/=fVertexesZTrackDca.size();
+        fVertexesZ.push_back(Vertexmean);
         acceptedtracks.clear();
   	    delete histo;
   	    delete hist;    
@@ -232,15 +210,19 @@ void Reconstruction::VertexRecoGeom()
 
 void Reconstruction::FillHistoVertexGeom(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, TH1D* graph)
 {
-  	for(int i=0; i<graph->GetNbinsX(); i++)
+    double mindistance=100000;
+  	for(int i=1; i<=graph->GetNbinsX(); i++)
     {
-        double totaldistance = GetTotalDistance(acceptedtracks, velocities, graph->GetBinCenter(i)); // total distance among all tracklets
-        cout << "Filling histogram cell for time " << graph->GetBinCenter(i) << " with value " << totaldistance << endl;   
+        //if (graph->GetBinCenter(i)<0 && graph->GetBinCenter(i)>-2)
+        //    cout << "Filling histogram cell for time " << graph->GetBinCenter(i) << endl;   
+        double totaldistance = GetTotalDistance(acceptedtracks, velocities, graph->GetBinCenter(i), mindistance); // total distance among all tracklets
+        if (totaldistance<mindistance)
+            mindistance=totaldistance;
         graph->Fill(graph->GetBinCenter(i),totaldistance);
     }    
 } 
 
-double Reconstruction::GetTotalDistance(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, double time)
+double Reconstruction::GetTotalDistance(vector<MaterialBudget::fPoint> acceptedtracks, vector<vector<double>> velocities, double time, double mindistance)
 {    
         //returns total distance of all tracklets with respect to track0 at t=time
     //cout << "Entering GetTotalDistance for track number " << trackindex << endl;
@@ -248,13 +230,16 @@ double Reconstruction::GetTotalDistance(vector<MaterialBudget::fPoint> acceptedt
   double countdistance=0;
   for(unsigned z=0; z<acceptedtracks.size(); z+=2){
     std::vector<double> vec1 = Line(acceptedtracks[z], acceptedtracks[z+1], velocities[z/2], time);
+    if (countdistance>mindistance)
+        break;
   	for(unsigned w=z; w<acceptedtracks.size(); w+=2){
       std::vector<double> vec2 = Line(acceptedtracks[w], acceptedtracks[w+1], velocities[w/2], time);
       double dx = vec1[0]-vec2[0];
       double dy = vec1[1]-vec2[1];
       double dz = vec1[2]-vec2[2];
-      cout << dx << " " << dy << " " << dz << endl;
       countdistance += TMath::Sqrt(dx*dx + dy*dy + dz*dz);
+      if (countdistance>mindistance)
+        break;
     }
   }
   return countdistance;
@@ -267,11 +252,7 @@ vector<double> Reconstruction::Line(MaterialBudget::fPoint point1, MaterialBudge
     x = point1.x + velocity[0]*time;
     y = point1.y + velocity[1]*time;
     z = point1.z + velocity[2]*time;
-    cout << x << " " << y << " " << z << endl;
-    std::vector<double> linecoordinates;
-    linecoordinates.push_back(x);
-    linecoordinates.push_back(y);
-    linecoordinates.push_back(z);
-    cout << "Line Ending" << endl;
-    return linecoordinates;
+    //cout << x << " " << y << " " << z << endl;
+    //cout << "Line Ending" << endl;
+    return {x,y,z};
 }
